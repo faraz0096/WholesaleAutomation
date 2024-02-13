@@ -14,7 +14,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WholesaleAutomation {
+public class VerifyGlobalDiscountPercentage {
 
 
     public static void main(String[] args) throws InterruptedException {
@@ -65,28 +65,28 @@ public class WholesaleAutomation {
 
         Thread.sleep(2000);
 
-        WebElement discountCheckbox = driver.findElement(By.xpath("//input[@id='role_26']"));
+        WebElement discountCheckbox = driver.findElement(By.xpath("//input[@id='role_16']"));
         JavascriptExecutor executor = (JavascriptExecutor) driver;
 
         if (!discountCheckbox.isSelected()) {
             executor.executeScript("arguments[0].click();", discountCheckbox);
         }
 
-        WebElement discountType = driver.findElement(By.name("discount_type_26"));
+        WebElement discountType = driver.findElement(By.name("discount_type_16"));
         Select el = new Select(discountType);
         el.selectByValue("percent");
         System.out.println(el.getFirstSelectedOption().getText());
 
-        driver.findElement(By.cssSelector("input[name='wholesale_price_26']")).clear();
-        driver.findElement(By.cssSelector("input[name='wholesale_price_26']")).sendKeys("50");
+        driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).clear();
+        driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).sendKeys("50");
         float convertWholesaleDiscount = Float.parseFloat(
-                driver.findElement(By.cssSelector("input[name='wholesale_price_26']")).getAttribute("value"));
+                driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).getAttribute("value"));
 
-        driver.findElement(By.cssSelector("input[name='min_quatity_26']")).clear();
-        driver.findElement(By.cssSelector("input[name='min_quatity_26']")).sendKeys("12");
+        driver.findElement(By.cssSelector("input[name='min_quatity_16']")).clear();
+        driver.findElement(By.cssSelector("input[name='min_quatity_16']")).sendKeys("12");
 
         int getMinQty = Integer
-                .parseInt(driver.findElement(By.cssSelector("input[name='min_quatity_26']")).getAttribute("value"));
+                .parseInt(driver.findElement(By.cssSelector("input[name='min_quatity_16']")).getAttribute("value"));
         driver.findElement(By.cssSelector("div[class='main-save-settings'] button[name='save-wwp_wholesale']")).click();
 
         ChromeOptions options = new ChromeOptions();
@@ -94,7 +94,7 @@ public class WholesaleAutomation {
 
         driver.get("https://wordpress-1077016-3777704.cloudwaysapps.com/my-account/");
         driver.findElement(By.cssSelector("li[class*='customer-logout'] a")).click();
-        driver.findElement(By.id("username")).sendKeys("tixixy@mailinator.com");
+        driver.findElement(By.id("username")).sendKeys("wholesale.automation@gmail.com");
         driver.findElement(By.id("password")).sendKeys("faraz0096");
         driver.findElement(By.name("login")).click();
         driver.findElement(By.linkText("Shop")).click();

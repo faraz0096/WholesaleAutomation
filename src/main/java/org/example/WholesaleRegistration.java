@@ -110,12 +110,12 @@ public class WholesaleRegistration {
 
         Assert.assertTrue(driver.findElement(By.id("enable_billing_company")).isSelected());
 
-      /* if(!driver.findElement(By.id("required_billing_company")).isSelected())
+       if(!driver.findElement(By.id("required_billing_company")).isSelected())
         {
             driver.findElement(By.cssSelector("label[for='required_billing_company']")).click();
         }
 
-        Assert.assertTrue(driver.findElement(By.id("required_billing_company")).isSelected());*/
+        Assert.assertTrue(driver.findElement(By.id("required_billing_company")).isSelected());
 
         boolean requiredCompany = driver.findElement(By.id("required_billing_company")).isSelected();
 
@@ -134,6 +134,8 @@ public class WholesaleRegistration {
             driver.findElement(By.cssSelector("label[for='required_billing_address_1']")).click();
         }
 
+        boolean billingAddress1Required = driver.findElement(By.id("required_billing_address_1")).isSelected();
+
         Assert.assertTrue(driver.findElement(By.id("required_billing_address_1")).isSelected());
 
         driver.findElement(By.id("billing_address_2")).clear();
@@ -151,7 +153,8 @@ public class WholesaleRegistration {
             driver.findElement(By.cssSelector("label[for='required_billing_address_2']")).click();
         }
 
-        Assert.assertTrue(driver.findElement(By.id("required_billing_address_1")).isSelected());
+        boolean billingAddress2Required = driver.findElement(By.id("required_billing_address_2")).isSelected();
+        Assert.assertTrue(driver.findElement(By.id("required_billing_address_2")).isSelected());
 
         driver.findElement(By.id("billing_city")).clear();
         driver.findElement(By.id("billing_city")).sendKeys("City/Town");
@@ -171,7 +174,7 @@ public class WholesaleRegistration {
         Assert.assertTrue(driver.findElement(By.id("required_billing_city")).isSelected());
 
         driver.findElement(By.id("billing_post_code")).clear();
-        driver.findElement(By.id("billing_post_code")).sendKeys("City/Town");
+        driver.findElement(By.id("billing_post_code")).sendKeys("Post Code");
 
         if(!driver.findElement(By.id("enable_billing_post_code")).isSelected())
         {
@@ -318,7 +321,46 @@ public class WholesaleRegistration {
 
         //If found not required (null) then this assertion failed
 
-        Assert.assertNotNull(companyRequiredAttribute , "Company field should requird");
+        Assert.assertNotNull(companyRequiredAttribute , "Company field should required");
+
+        //Check Address-1 required validation applied correctly on Company or not
+        WebElement address1Required = driver.findElement(By.id("wwp_wholesaler_address_line_1"));
+        String addressRequiredAttribute = address1Required.getAttribute("required");
+
+        if(addressRequiredAttribute!=null)
+        {
+            System.out.println("Address 1 is required");
+        }else {
+
+            System.out.println("Address 1 is not required");
+        }
+
+        //If Address 1 required is enabled from backend and not applying on front-end then below assertion failed
+        Assert.assertTrue(billingAddress1Required , driver.findElement(By.id("wwp_wholesaler_address_line_1")).getAttribute("required"));
+
+        // If found not required (null) then this assertion failed
+        Assert.assertNotNull(addressRequiredAttribute , " Billing Address should required");
+
+        WebElement billingAddress2 = driver.findElement(By.id("wwp_wholesaler_address_line_2"));
+        String billingAddress2RequiredAttribute = billingAddress2.getAttribute("required");
+
+        if(billingAddress2RequiredAttribute!=null)
+        {
+            System.out.println("Address 2 is required");
+        }else {
+
+            System.out.println("Address 1 is not required");
+        }
+
+        //If Address 2 required is enabled from backend and not applying on front-end then below assertion failed
+        Assert.assertTrue(billingAddress2Required , driver.findElement(By.id("wwp_wholesaler_shipping_address_line_2")).getAttribute("required"));
+
+        // If found not required (null) then this assertion failed
+        Assert.assertNotNull(billingAddress2RequiredAttribute , "Billing Address 2 should required");
+
+
+
+
 
 
     }
