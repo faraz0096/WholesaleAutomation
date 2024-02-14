@@ -1,22 +1,14 @@
 package org.example;
-
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
-
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
-
-
-import javax.swing.*;
-import javax.swing.plaf.TableHeaderUI;
 import java.time.Duration;
 
 public class VerifyProductDiscountFixed {
@@ -113,6 +105,10 @@ public class VerifyProductDiscountFixed {
         Integer minQty = Integer.parseInt(driver.findElement(By.cssSelector("input[name='min_quatity_16']")).getAttribute("value"));
         WebElement updateButton = driver.findElement(By.cssSelector("input[id='publish']"));
         executor.executeScript("arguments[0].click();", updateButton);
+
+        //Get regular price from product.
+        driver.findElement(By.linkText("General")).click();
+        double getRegularPrice = Double.parseDouble(driver.findElement(By.id("_regular_price")).getAttribute("value"));
 
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--incognito");
@@ -227,6 +223,9 @@ public class VerifyProductDiscountFixed {
         String getPriceAfterDecreaseQtyText = driver.findElement(By.xpath("//div[@class='wc-block-cart-item__prices'] //span[@class='wc-block-formatted-money-amount wc-block-components-formatted-money-amount wc-block-components-product-price__value']")).getText();
         double getPriceAfterDecreaseQty = NumberFormat.getInstance().parse(getPriceAfterDecreaseQtyText.substring(1)).doubleValue();
         System.out.println(getPriceAfterDecreaseQty);
+
+        //Verify when cart quantity less than min qty, wholesale price changed to regular price or not
+        Assert.assertEquals(getPriceAfterDecreaseQty , getRegularPrice);
 
 
     }
