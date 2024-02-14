@@ -1,5 +1,7 @@
 package org.example;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.List;
 
 import org.openqa.selenium.*;
@@ -19,7 +21,7 @@ import java.time.Duration;
 
 public class VerifyProductDiscountFixed {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ParseException {
 
         WebDriver driver = new ChromeDriver();
         //WebDriverManager.chromedriver().setup();
@@ -105,7 +107,7 @@ public class VerifyProductDiscountFixed {
 
         driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).clear();
         driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).sendKeys("50");
-        Integer wholesalePrice = Integer.parseInt(driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).getAttribute("value"));
+        double wholesalePrice = Double.parseDouble(driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).getAttribute("value"));
         driver.findElement(By.cssSelector("input[name='min_quatity_16']")).clear();
         driver.findElement(By.cssSelector("input[name='min_quatity_16']")).sendKeys("12");
         Integer minQty = Integer.parseInt(driver.findElement(By.cssSelector("input[name='min_quatity_16']")).getAttribute("value"));
@@ -124,6 +126,7 @@ public class VerifyProductDiscountFixed {
 
         List<WebElement> loopProducts = driver.findElements(By.cssSelector("h2.woocommerce-loop-product__title"));
         WebElement loopWholesaleDiscount = driver.findElement(By.xpath("//div[@class='wwp-wholesale-pricing-details']/p[2]/span[2]"));
+        WebElement minQtyTextFromShopPage = driver.findElement(By.xpath("//div[@class='wwp-wholesale-pricing-details']/p[4]"));
 
         // Iterate through each product title
         for (int i = 0; i < loopProducts.size(); i++) {
@@ -134,23 +137,97 @@ public class VerifyProductDiscountFixed {
             // Check if the current product title contains the desired product
             if (productTitle.equals(products)) {
                 // Use the index 'i' to get the corresponding wholesale discount element
-              //  WebElement wholesaleDiscountElement = loopWholesaleDiscount.get(i);
+                //  WebElement wholesaleDiscountElement = loopWholesaleDiscount.get(i);
                 String priceWithSymbol = loopWholesaleDiscount.getText();
                 String priceWithoutSymbol = priceWithSymbol.replace("$", "").trim();
 
                 if (!priceWithoutSymbol.isEmpty()) {
-                    double wholesaleDiscount = Double.parseDouble(priceWithoutSymbol);
+                    double wholesaleDiscountShopPage = Double.parseDouble(priceWithoutSymbol);
+                    System.out.println(wholesaleDiscountShopPage);
 
                     //Verify the wholesale discount applying on shop page correctly
-                    Assert.assertEquals(wholesaleDiscount , (int)wholesalePrice);
+                    Assert.assertEquals(wholesaleDiscountShopPage, wholesalePrice);
+
+                    int splitMinQtytext = Integer.parseInt(minQtyTextFromShopPage.getText().split("of")[1].split("products")[0].trim());
+
+                    //Verify the minimum quantity text on shop page
+                    Assert.assertEquals(splitMinQtytext, minQty);
+                    System.out.println(splitMinQtytext);
                 }
 
             }
         }
 
-            Actions a = new Actions(driver);
-            driver.findElement(By.id("woocommerce-product-search-field-0")).sendKeys(products);
-            a.moveToElement(driver.findElement(By.id("woocommerce-product-search-field-0"))).keyDown(Keys.ENTER).build().perform();
+        Actions a = new Actions(driver);
+        driver.findElement(By.id("woocommerce-product-search-field-0")).sendKeys(products);
+        a.moveToElement(driver.findElement(By.id("woocommerce-product-search-field-0"))).keyDown(Keys.ENTER).build().perform();
+
+        Thread.sleep(2000);
+        //Get Wholesale Discount from product page and convert to float or double
+        double wholesaleDiscount = Double.parseDouble(driver.findElement(By.xpath("//div[@class='summary entry-summary'] //div[@class='wwp-wholesale-pricing-details']/p[2]/span[2]")).getText().replace("$", "").trim());
+
+        //Verify the Wholesale discount correctly on product page
+        Assert.assertEquals(wholesaleDiscount, wholesalePrice);
+
+        //Verify the minimum quantity discount on product page
+        int minQtyProductPage = Integer.parseInt(driver.findElement(By.xpath("//div[@class='summary entry-summary'] //div[@class='wwp-wholesale-pricing-details']/p[4]")).getText().split("of")[1].split("products")[0].trim());
+        Assert.assertEquals(minQtyProductPage, minQty);
+        System.out.println("The minimum quantity on product page is correct " + minQtyProductPage);
+
+        //send the quantity to products then add to cart the product
+        //  int getqtyfromProduct = Integer.parseInt(driver.findElement(By.cssSelector("form[class='cart'] button[name='add-to-cart']")).getAttribute("value"));
+        //   System.out.println(getqtyfromProduct);
+        driver.findElement(By.cssSelector("input[aria-label='Product quantity']")).clear();
+        driver.findElement(By.cssSelector("input[aria-label='Product quantity']")).sendKeys("12");
+        driver.findElement(By.cssSelector("form[class='cart'] button[name='add-to-cart']")).click();
+        driver.findElement(By.linkText("View cart")).click();
+
+        //Get wholesale discount from cart and verify
+        double cartWholesale = Double.parseDouble(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__prices'] //ins[@class='wc-block-components-product-price__value is-discounted']")).getText().replace("$", "").trim());
+        Assert.assertEquals(cartWholesale, wholesalePrice);
+        System.out.println("The wholesale fixed discount on cart page is correct " + cartWholesale);
+
+        //Get product quantity from cart page
+        int cartQuantity = Integer.parseInt(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__quantity']/div //input[@class='wc-block-components-quantity-selector__input']")).getAttribute("value"));
+
+        //multiply the quantity with per product price
+        double multiplyQuantity = cartWholesale * cartQuantity;
+
+        //Get total amount from product cart section
+        String productCartTotalText = driver.findElement(By.xpath("//div[@class='wc-block-cart-item__total-price-and-sale-badge-wrapper'] //span[@class='wc-block-formatted-money-amount wc-block-components-formatted-money-amount wc-block-components-product-price__value']")).getText();
+        double convertproductTotalText = NumberFormat.getInstance().parse(productCartTotalText.substring(1)).doubleValue();
+        System.out.println("total cart " + convertproductTotalText);
+
+        //Verify the per product wholesale discount calculating with product quantity
+        Assert.assertEquals(convertproductTotalText, multiplyQuantity);
+
+        //Get Sub-total from cart totals
+        String cartSubTotalText = driver.findElement(By.xpath("//div[@class='wc-block-components-totals-item']/span[2]")).getText();
+        double cartSubTotal = NumberFormat.getInstance().parse(cartSubTotalText.substring(1)).doubleValue();
+
+        //Compare sub-total in product cart section and cart total section
+        Assert.assertEquals(cartSubTotal, convertproductTotalText);
+        //  System.out.println("");
+
+
+        int reduceQty = Integer.parseInt(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__quantity']/div //input[@class='wc-block-components-quantity-selector__input']")).getAttribute("value"));
+      //  System.out.println(reduceQty);
+
+        while (reduceQty > 11) {
+            WebElement decreaseButton = driver.findElement(By.xpath("//button[@class='wc-block-components-quantity-selector__button wc-block-components-quantity-selector__button--minus']"));
+            decreaseButton.click();
+
+            // Wait for the quantity to update before checking again
+            Thread.sleep(5000);
+
+            // Update reduceQty after clicking the decrease button
+            reduceQty = Integer.parseInt(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__quantity']/div //input[@class='wc-block-components-quantity-selector__input']")).getAttribute("value"));
+        }
+
+        String getPriceAfterDecreaseQtyText = driver.findElement(By.xpath("//div[@class='wc-block-cart-item__prices'] //span[@class='wc-block-formatted-money-amount wc-block-components-formatted-money-amount wc-block-components-product-price__value']")).getText();
+        double getPriceAfterDecreaseQty = NumberFormat.getInstance().parse(getPriceAfterDecreaseQtyText.substring(1)).doubleValue();
+        System.out.println(getPriceAfterDecreaseQty);
+
 
     }
 
