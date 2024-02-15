@@ -1,7 +1,4 @@
 package org.example;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.List;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -9,9 +6,12 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.time.Duration;
+import java.util.List;
 
-public class VerifyProductDiscountFixed {
+public class ProductDiscountPercentage {
 
     public static void main(String[] args) throws InterruptedException, ParseException {
 
@@ -21,7 +21,7 @@ public class VerifyProductDiscountFixed {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(8));
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
-        String products = "Automation Products Fixed Discount";
+        String products = "Products Percentage Discount";
 
         driver.manage().window().maximize();
 
@@ -51,8 +51,8 @@ public class VerifyProductDiscountFixed {
         //Search automation product "Automation Products Fixed Discount"
         driver.findElement(By.id("post-search-input")).sendKeys(products);
         driver.findElement(By.id("search-submit")).click();
-        driver.findElement(By.linkText("Automation Products Fixed Discount")).click();
-        Thread.sleep(3000);
+        driver.findElement(By.linkText(products)).click();
+        Thread.sleep(4000);
 
         try {
             //wait.until(ExpectedConditions.visibilityOfAllElements(driver.findElements(By.xpath("//div[@class='card']/button"))));
@@ -95,13 +95,13 @@ public class VerifyProductDiscountFixed {
 
         WebElement discountDropDown = driver.findElement(By.cssSelector("select[name='discount_type_16']"));
         Select discountType = new Select(discountDropDown);
-        discountType.selectByValue("fixed");
+        discountType.selectByValue("percent");
 
         driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).clear();
-        driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).sendKeys("50");
+        driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).sendKeys("65");
         double wholesalePrice = Double.parseDouble(driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).getAttribute("value"));
         driver.findElement(By.cssSelector("input[name='min_quatity_16']")).clear();
-        driver.findElement(By.cssSelector("input[name='min_quatity_16']")).sendKeys("12");
+        driver.findElement(By.cssSelector("input[name='min_quatity_16']")).sendKeys("20");
         Integer minQty = Integer.parseInt(driver.findElement(By.cssSelector("input[name='min_quatity_16']")).getAttribute("value"));
         WebElement updateButton = driver.findElement(By.cssSelector("input[id='publish']"));
         executor.executeScript("arguments[0].click();", updateButton);
@@ -127,8 +127,8 @@ public class VerifyProductDiscountFixed {
         // Iterate through each product title
         for (int i = 0; i < loopProducts.size(); i++) {
             WebElement productTitleElement = loopProducts.get(i);
-            String productTitle = productTitleElement.getText();
-            //System.out.println(productTitle);
+            String productTitle = productTitleElement.getText().trim();
+         //   System.out.println(productTitle);
 
             // Check if the current product title contains the desired product
             if (productTitle.equals(products)) {
@@ -141,8 +141,11 @@ public class VerifyProductDiscountFixed {
                     double wholesaleDiscountShopPage = Double.parseDouble(priceWithoutSymbol);
                     System.out.println(wholesaleDiscountShopPage);
 
+                    //Formula to calculate % Discount
+                    double calcPercDiscount = (getRegularPrice * wholesalePrice)/100;
+
                     //Verify the wholesale discount applying on shop page correctly
-                    Assert.assertEquals(wholesaleDiscountShopPage, wholesalePrice);
+                    Assert.assertEquals(wholesaleDiscountShopPage, calcPercDiscount);
 
                     int splitMinQtytext = Integer.parseInt(minQtyTextFromShopPage.getText().split("of")[1].split("products")[0].trim());
 
@@ -163,7 +166,8 @@ public class VerifyProductDiscountFixed {
         double wholesaleDiscount = Double.parseDouble(driver.findElement(By.xpath("//div[@class='summary entry-summary'] //div[@class='wwp-wholesale-pricing-details']/p[2]/span[2]")).getText().replace("$", "").trim());
 
         //Verify the Wholesale discount correctly on product page
-        Assert.assertEquals(wholesaleDiscount, wholesalePrice);
+        double calcPercDiscount = (getRegularPrice * wholesalePrice)/100;
+        Assert.assertEquals(wholesaleDiscount, calcPercDiscount);
 
         //Verify the minimum quantity discount on product page
         int minQtyProductPage = Integer.parseInt(driver.findElement(By.xpath("//div[@class='summary entry-summary'] //div[@class='wwp-wholesale-pricing-details']/p[4]")).getText().split("of")[1].split("products")[0].trim());
@@ -174,13 +178,13 @@ public class VerifyProductDiscountFixed {
         //  int getqtyfromProduct = Integer.parseInt(driver.findElement(By.cssSelector("form[class='cart'] button[name='add-to-cart']")).getAttribute("value"));
         //   System.out.println(getqtyfromProduct);
         driver.findElement(By.cssSelector("input[aria-label='Product quantity']")).clear();
-        driver.findElement(By.cssSelector("input[aria-label='Product quantity']")).sendKeys("12");
+        driver.findElement(By.cssSelector("input[aria-label='Product quantity']")).sendKeys("20");
         driver.findElement(By.cssSelector("form[class='cart'] button[name='add-to-cart']")).click();
         driver.findElement(By.linkText("View cart")).click();
 
         //Get wholesale discount from cart and verify
         double cartWholesale = Double.parseDouble(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__prices'] //ins[@class='wc-block-components-product-price__value is-discounted']")).getText().replace("$", "").trim());
-        Assert.assertEquals(cartWholesale, wholesalePrice);
+        Assert.assertEquals(cartWholesale, calcPercDiscount);
         System.out.println("The wholesale fixed discount on cart page is correct " + cartWholesale);
 
         //Get product quantity from cart page
@@ -207,7 +211,7 @@ public class VerifyProductDiscountFixed {
 
 
         int reduceQty = Integer.parseInt(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__quantity']/div //input[@class='wc-block-components-quantity-selector__input']")).getAttribute("value"));
-      //  System.out.println(reduceQty);
+        //  System.out.println(reduceQty);
 
         while (reduceQty > 11) {
             WebElement decreaseButton = driver.findElement(By.xpath("//button[@class='wc-block-components-quantity-selector__button wc-block-components-quantity-selector__button--minus']"));
@@ -225,11 +229,9 @@ public class VerifyProductDiscountFixed {
         System.out.println(getPriceAfterDecreaseQty);
 
         //Verify when cart quantity less than min qty, wholesale price changed to regular price or not
-        Assert.assertEquals(getPriceAfterDecreaseQty , getRegularPrice);
+        Assert.assertEquals(getPriceAfterDecreaseQty, getRegularPrice);
 
 
     }
 
 }
-
-
