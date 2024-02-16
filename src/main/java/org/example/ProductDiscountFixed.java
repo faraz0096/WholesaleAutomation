@@ -1,7 +1,9 @@
 package org.example;
+
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
+
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -9,6 +11,7 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
+
 import java.time.Duration;
 
 public class ProductDiscountFixed {
@@ -54,33 +57,15 @@ public class ProductDiscountFixed {
         driver.findElement(By.linkText("Automation Products Fixed Discount")).click();
         Thread.sleep(3000);
 
-        try {
-            //wait.until(ExpectedConditions.visibilityOfAllElements(driver.findElements(By.xpath("//div[@class='card']/button"))));
-            List<WebElement> wholesaleRole = driver.findElements(By.xpath("//div[@class='card']/button"));
-            for (int i = 0; i < wholesaleRole.size(); i++) {
+        //wait.until(ExpectedConditions.visibilityOfAllElements(driver.findElements(By.xpath("//div[@class='card']/button"))));
+        List<WebElement> wholesaleRole = driver.findElements(By.xpath("//div[@id='wholesale-multiuser-pricing'] //div[@class='card']/button"));
+        for (int i = 0; i < wholesaleRole.size(); i++) {
 
-                System.out.println(wholesaleRole.get(i).getText());
+            System.out.println(wholesaleRole.get(i).getText());
 
-                if (wholesaleRole.get(i).getText().contains("Updated Role")) {
+            if (wholesaleRole.get(i).getText().contains("Updated Role")) {
 
-                    wholesaleRole.get(i).click();
-                }
-            }
-
-        } catch (org.openqa.selenium.StaleElementReferenceException ex) {
-
-            //wait.until(ExpectedConditions.visibilityOfAllElements(driver.findElements(By.xpath("//div[@class='card']/button"))));
-            List<WebElement> wholesaleRole = driver.findElements(By.xpath("//div[@class='card']/button"));
-            for (int i = 0; i < wholesaleRole.size(); i++) {
-
-                //    System.out.println(wholesaleRole.get(i).getText());
-
-                if (wholesaleRole.get(i).getText().contains("Updated Role")) {
-
-                    wholesaleRole.get(i).click();
-
-
-                }
+                wholesaleRole.get(i).click();
             }
         }
 
@@ -207,7 +192,7 @@ public class ProductDiscountFixed {
 
 
         int reduceQty = Integer.parseInt(driver.findElement(By.xpath("//div[@class='wc-block-cart-item__quantity']/div //input[@class='wc-block-components-quantity-selector__input']")).getAttribute("value"));
-      //  System.out.println(reduceQty);
+        //  System.out.println(reduceQty);
 
         while (reduceQty > 11) {
             WebElement decreaseButton = driver.findElement(By.xpath("//button[@class='wc-block-components-quantity-selector__button wc-block-components-quantity-selector__button--minus']"));
@@ -225,7 +210,7 @@ public class ProductDiscountFixed {
         System.out.println(getPriceAfterDecreaseQty);
 
         //Verify when cart quantity less than min qty, wholesale price changed to regular price or not
-        Assert.assertEquals(getPriceAfterDecreaseQty , getRegularPrice);
+        Assert.assertEquals(getPriceAfterDecreaseQty, getRegularPrice);
 
 
     }

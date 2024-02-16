@@ -7,7 +7,9 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 
 import java.time.Duration;
@@ -26,6 +28,7 @@ public class VerifyGlobalDiscountPercentage {
         driver.manage().window().maximize();
 
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(8));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         String adminURL = "https://wordpress-1077016-3777704.cloudwaysapps.com/wp-admin/";
         String restoreURL = "https://wordpress-1077016-3777704.cloudwaysapps.com/";
         String truncateWholesale = "?reset_pricing=1";
@@ -51,43 +54,57 @@ public class VerifyGlobalDiscountPercentage {
         Thread.sleep(2000);
         // div[@class='card']/button
         // div[@class='card'] //button[@class='btn btn-link collapsed']
-        List<WebElement> cardsList = driver.findElements(By.xpath("//div[@class='card']/button"));
 
-        for (WebElement e : cardsList)
+        List<WebElement> cardsList = driver.findElements(By.xpath("//div[@id='section2'] //div[@class='card']/button"));
 
-        {
-            if (e.getText().contains("Updated Role")) {
+        float convertWholesaleDiscount = 0;
+        int getMinQty = 0;
 
-                e.click();
+        for (int i = 0; i < cardsList.size(); i++) {
+            //Just need to change the role name everything is dynamic no hardcoded field's id get(i)
+            //if the environment changed later just change the role name
+            if (cardsList.get(i).getText().trim().equals("Updated Role")) {
+                cardsList.get(i).click();
+                WebElement discountCheckbox = driver.findElements(By.xpath("//input[contains(@class,'wwp-checbox')]")).get(i);
+                JavascriptExecutor executor = (JavascriptExecutor) driver;
 
+                if (!discountCheckbox.isSelected()) {
+                    executor.executeScript("arguments[0].click();", discountCheckbox);
+                }
+
+                WebElement discountType = driver.findElements(By.xpath("//select[contains(@name,'discount_type')]")).get(i);
+                Select el = new Select(discountType);
+                el.selectByValue("percent");
+                System.out.println(el.getFirstSelectedOption().getText());
+                driver.findElements(By.cssSelector("input.regular-text.wwp-price")).get(i).clear();
+                driver.findElements(By.cssSelector("input.regular-text.wwp-price")).get(i).sendKeys("50");
+                convertWholesaleDiscount = Float.parseFloat(
+                        driver.findElements(By.cssSelector("input.regular-text.wwp-price")).get(i).getAttribute("value"));
+                driver.findElements(By.xpath("//input[contains(@name,'min_quatity')]")).get(i).clear();
+                driver.findElements(By.xpath("//input[contains(@name,'min_quatity')]")).get(i).sendKeys("12");
+                getMinQty = Integer.parseInt(driver.findElements(By.xpath("//input[contains(@name,'min_quatity')]")).get(i).getAttribute("value"));
             }
         }
 
         Thread.sleep(2000);
 
-        WebElement discountCheckbox = driver.findElement(By.xpath("//input[@id='role_16']"));
-        JavascriptExecutor executor = (JavascriptExecutor) driver;
 
-        if (!discountCheckbox.isSelected()) {
-            executor.executeScript("arguments[0].click();", discountCheckbox);
+        driver.findElement(By.cssSelector("div[class='main-save-settings'] button[name='save-wwp_wholesale']")).click();
+
+        Thread.sleep(3000);
+
+
+        //Verify wholesale signal is on or not
+
+        List<WebElement> cardsList1 = driver.findElements(By.xpath("//div[@id='section2'] //div[@class='card']/button"));
+
+        for (int i = 0; i < cardsList1.size(); i++) {
+            if (cardsList1.get(i).getText().contains("Updated Role")) {
+                WebElement activeClass = driver.findElements(By.xpath("//div[@id='section2'] //div[@class='wwp_signal']/div[2]")).get(i);
+                System.out.println("Class Attribute: " + activeClass.getAttribute("class"));
+            }
         }
 
-        WebElement discountType = driver.findElement(By.name("discount_type_16"));
-        Select el = new Select(discountType);
-        el.selectByValue("percent");
-        System.out.println(el.getFirstSelectedOption().getText());
-
-        driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).clear();
-        driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).sendKeys("50");
-        float convertWholesaleDiscount = Float.parseFloat(
-                driver.findElement(By.cssSelector("input[name='wholesale_price_16']")).getAttribute("value"));
-
-        driver.findElement(By.cssSelector("input[name='min_quatity_16']")).clear();
-        driver.findElement(By.cssSelector("input[name='min_quatity_16']")).sendKeys("12");
-
-        int getMinQty = Integer
-                .parseInt(driver.findElement(By.cssSelector("input[name='min_quatity_16']")).getAttribute("value"));
-        driver.findElement(By.cssSelector("div[class='main-save-settings'] button[name='save-wwp_wholesale']")).click();
 
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--incognito");
@@ -102,27 +119,21 @@ public class VerifyGlobalDiscountPercentage {
         List<Float> actualPrices = getActualPrice(driver);
         Thread.sleep(2000);
 
-        for (Float price : actualPrices)
-
-        {
+        for (Float price : actualPrices) {
             System.out.println("Actual Prices: " + price);
         }
 
         List<Float> wholesalePrices = getWholesalePrice(driver);
         Thread.sleep(2000);
 
-        for (Float price : wholesalePrices)
-
-        {
+        for (Float price : wholesalePrices) {
             System.out.println("Wholesale Prices: " + price);
 
         }
 
         // Check Wholesale Global Discount working fine on Shop page
 
-        for (float price : actualPrices)
-
-        {
+        for (float price : actualPrices) {
 
             float calculate = (float) ((price * convertWholesaleDiscount) / 100);
 
@@ -143,9 +154,7 @@ public class VerifyGlobalDiscountPercentage {
 
         List<WebElement> products = driver.findElements(By.cssSelector("li[class*=' type-product']"));
 
-        for (WebElement product : products)
-
-        {
+        for (WebElement product : products) {
             product.click();
             break;
         }
@@ -166,7 +175,7 @@ public class VerifyGlobalDiscountPercentage {
                     .getText();
             String ActualpriceWithoutDollarSign = actualPrice.replace("$", "").trim();
             float convertActualPrice = Float.parseFloat(ActualpriceWithoutDollarSign);
-             System.out.println("Actual: " + convertActualPrice);
+            System.out.println("Actual: " + convertActualPrice);
 
             // Calculate and compare
             float calculatePercentDiscount = (convertActualPrice * convertWholesaleDiscount) / 100;
@@ -203,14 +212,14 @@ public class VerifyGlobalDiscountPercentage {
 
         //Get Wholesale discount from cart
 
-       String discountText =  driver.findElement(By.cssSelector("ins[class='wc-block-components-product-price__value is-discounted']")).getText();
+        String discountText = driver.findElement(By.cssSelector("ins[class='wc-block-components-product-price__value is-discounted']")).getText();
 
-       String removeDollarWH = discountText.replace("$", "").trim();
+        String removeDollarWH = discountText.replace("$", "").trim();
 
-       double convertWH = Double.parseDouble(removeDollarWH);
+        double convertWH = Double.parseDouble(removeDollarWH);
 
 
-       //Get Regular Price from cart
+        //Get Regular Price from cart
 
         String regPriceText = driver.findElement(By.cssSelector("del[class='wc-block-components-product-price__regular']")).getText();
         String removeDollarRE = regPriceText.replace("$", "").trim();
@@ -218,10 +227,10 @@ public class VerifyGlobalDiscountPercentage {
 
         //Calculate Wholesale Discount on Cart page
 
-        double calculate = (convertREg * convertWholesaleDiscount) /100;
+        double calculate = (convertREg * convertWholesaleDiscount) / 100;
 
         //Compare and calculate
-        Assert.assertEquals(calculate , convertWH);
+        Assert.assertEquals(calculate, convertWH);
         System.out.println("Wholesale Discount calculating fine on cart page" + convertWH);
 
     }
@@ -229,13 +238,13 @@ public class VerifyGlobalDiscountPercentage {
     // System.out.println("Calcuated Wholesale Discount: " +
     // calculateWholesaleDiscount);
 
-/*
+    /*
      * if (wholesalePrices == calculateWholesaleDiscount)
      *
      * { System.out.println("Global Discount working fine");
      *
      * }
-*/
+     */
 
     public static List<Float> getWholesalePrice(WebDriver driver) {
         List<WebElement> getWholesaleGlobalDiscount = driver
@@ -265,9 +274,7 @@ public class VerifyGlobalDiscountPercentage {
         // double doublePriceActual = 0.0;
         List<Float> actualPricesList = new ArrayList<>();
 
-        for (WebElement iterateRetial : getretailPrice)
-
-        {
+        for (WebElement iterateRetial : getretailPrice) {
             String originalPrice = iterateRetial.getText();
             String priceWithoutDollarSign = originalPrice.replace("$", "").trim();
 
